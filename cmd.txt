@@ -1,0 +1,1 @@
+export file=small && ./main input/${file}.mnt out/${file}.mnt && diff out/${file}.mnt samples/${file}.mnt
