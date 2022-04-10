@@ -9,7 +9,7 @@
 
 // si ce define n'est pas commenté, l'exécution affiche sur stderr la hauteur
 // courante en train d'être calculée (doit augmenter) et l'itération du calcul
-#define DARBOUX_PPRINT
+// #define DARBOUX_PPRINT
 
 #define PRECISION_FLOTTANT 1.e-5
 
@@ -35,6 +35,7 @@ float *init_W(const mnt *restrict m)
 
   // initialisation W
   const float max = max_terrain(m) + 10.;
+  #pragma omp parallel for collapse(2) 
   for(int i = 0 ; i < nrows ; i++)
   {
     for(int j = 0 ; j < ncols ; j++)
@@ -145,21 +146,18 @@ mnt *darboux(const mnt *restrict m)
 
   // calcul : boucle principale
   int modif = 1;
+  int i;
   while(modif)
   {
     modif = 0; // sera mis à 1 s'il y a une modification
 
     // calcule le nouveau W fonction de l'ancien (Wprec) en chaque point [i,j]
-    printf("%d\n", omp_get_num_threads());
-    #pragma omp parallel for collapse(2)
-    for(int i=0; i<nrows; i++)
+    #pragma omp parallel for
+    for(i=0; i<nrows*ncols; i++)
     {
-      for(int j=0; j<ncols; j++)
-      {
-        // calcule la nouvelle valeur de W[i,j]
-        // en utilisant les 8 voisins de la position [i,j] du tableau Wprec
-        modif |= calcul_Wij(W, Wprec, m, i, j);
-      }
+      // calcule la nouvelle valeur de W[i,j]
+      // en utilisant les 8 voisins de la position [i,j] du tableau Wprec
+      modif |= calcul_Wij(W, Wprec, m, i/ncols, i%ncols);
     }
 
     #ifdef DARBOUX_PPRINT
