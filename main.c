@@ -2,13 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 #include "type.h"
 #include "io.h"
 #include "darboux.h"
 
 int main(int argc, char **argv)
 {
-  mnt *m, *d;
+  mnt *m, *d;  
 
   if(argc < 2)
   {

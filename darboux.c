@@ -1,6 +1,7 @@
 // fonction de calcul principale : algorithme de Darboux
 // (remplissage des cuvettes d'un MNT)
 #include <string.h>
+#include <omp.h>
 
 #include "check.h"
 #include "type.h"
@@ -149,6 +150,8 @@ mnt *darboux(const mnt *restrict m)
     modif = 0; // sera mis à 1 s'il y a une modification
 
     // calcule le nouveau W fonction de l'ancien (Wprec) en chaque point [i,j]
+    printf("%d\n", omp_get_num_threads());
+    #pragma omp parallel for collapse(2)
     for(int i=0; i<nrows; i++)
     {
       for(int j=0; j<ncols; j++)
