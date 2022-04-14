@@ -1,6 +1,6 @@
-vmCalculParallelegrp1-0 slots=4
-vmCalculParallelegrp1-1 slots=4
-vmCalculParallelegrp1-2 slots=4
-vmCalculParallelegrp1-3 slots=4
-vmCalculParallelegrp1-4 slots=4
-vmCalculParallelegrp1-5 slots=4
+vmCalculParallelegrp1-0 slots=1
+vmCalculParallelegrp1-1 slots=1
+vmCalculParallelegrp1-2 slots=1
+vmCalculParallelegrp1-3 slots=1
+vmCalculParallelegrp1-4 slots=1
+vmCalculParallelegrp1-5 slots=1

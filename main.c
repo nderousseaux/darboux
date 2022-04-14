@@ -6,10 +6,19 @@
 #include "type.h"
 #include "io.h"
 #include "darboux.h"
+#include "mpi.h"
 
 int main(int argc, char **argv)
 {
-  mnt *m, *d;  
+  if (MPI_Init(&argc, &argv)){
+		fprintf(stderr, "Erreur MPI_Init\n");
+  }
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  mnt *m;
+  mnt *d;  
 
   if(argc < 2)
   {
@@ -24,22 +33,24 @@ int main(int argc, char **argv)
   d = darboux(m);
 
   // WRITE OUTPUT
-  FILE *out;
-  if(argc == 3)
-    out = fopen(argv[2], "w");
-  else
-    out = stdout;
-  mnt_write(d, out);
-  if(argc == 3)
-    fclose(out);
-  else
-    mnt_write_lakes(m, d, stdout);
+  // FILE *out;
+  // if(argc == 3)
+  //   out = fopen(argv[2], "w");
+  // else
+  //   out = stdout;
+  // mnt_write(d, out);
+  // if(argc == 3)
+  //   fclose(out);
+  // else
+  //   mnt_write_lakes(m, d, stdout);
 
-  // free
+  
   free(m->terrain);
   free(m);
   free(d->terrain);
   free(d);
 
+
+  MPI_Finalize();
   return(0);
 }
