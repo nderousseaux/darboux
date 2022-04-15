@@ -21,6 +21,21 @@ int share_rows(int n_rows, int index){
   }
 }
 
+void display_information(mnt * m,int* rank){
+   
+   printf("**************************************\n");
+   printf("nb_proc: %d\n",*rank);
+   printf("**************************************\n");
+   printf("informations : \n");
+   printf("              m->ncols ->%d \n",m->ncols);
+   printf("              m->nrows ->%d \n",m->nrows);
+   printf("              m->xllcorner ->%f \n",  m->xllcorner);
+   printf("              m->yllcorner ->%f \n",  m->yllcorner);
+   printf("              m->cellsize  ->%f \n", m->cellsize );
+   printf("              m->terrain[0]   ->%f \n", m->terrain[0]);
+}
+
+
 mnt *create_m(mnt *m_source, int nrows){
   mnt *m;
   CHECK((m = malloc(sizeof(*m))) != NULL);
@@ -72,6 +87,8 @@ mnt *mnt_read(char *fname)
     MPI_Recv(&(m->terrain[0]), m->ncols * m->nrows, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &s);
   }
   
+
+   display_information(m,&rank);
   return(m);
 }
 

@@ -6,6 +6,8 @@
 #include "check.h"
 #include "type.h"
 #include "darboux.h"
+#include<mpi.h>
+
 
 // si ce define n'est pas commenté, l'exécution affiche sur stderr la hauteur
 // courante en train d'être calculée (doit augmenter) et l'itération du calcul
@@ -29,23 +31,84 @@ float max_terrain(const mnt *restrict m)
 // initialise le tableau W de départ à partir d'un mnt m
 float *init_W(const mnt *restrict m)
 {
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
   const int ncols = m->ncols, nrows = m->nrows;
   float *restrict W;
   CHECK((W = malloc(ncols * nrows * sizeof(float))) != NULL);
 
   // initialisation W
-  const float max = max_terrain(m) + 10.;
-  #pragma omp parallel for collapse(2) 
-  for(int i = 0 ; i < nrows ; i++)
+  float max = max_terrain(m) + 10.;
+
+  printf("rank: %d ,max:%f",rank,max);
+
+  float global_max=0;
+
+  MPI_Allreduce(&max, &global_max, 1, MPI_FLOAT, MPI_MAX,MPI_COMM_WORLD);
+  // printf("rank: %d ,global_max:%f",rank,global_max);
+
+  max=global_max;
+
+
+  // Paralléliser les deux boucles de tele sorte que le regroupement de  tous les mnt de chaque processus  soit identique au mnt séquentiel
+
+  if (rank == 0)
   {
-    for(int j = 0 ; j < ncols ; j++)
+    // je lis  la premiére ligne  de la matrice seulement  et les bords :
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < nrows; i++)
     {
-      if(i==0 || i==nrows-1 || j==0 || j==ncols-1 || TERRAIN(m,i,j) == m->no_data)
-        WTERRAIN(W,i,j) = TERRAIN(m,i,j);
-      else
-        WTERRAIN(W,i,j) = max;
+      for (int j = 0; j < ncols; j++)
+      {
+        if (i == 0  || j == 0 || j == ncols - 1 || TERRAIN(m, i, j) == m->no_data)
+          WTERRAIN(W, i, j) = TERRAIN(m, i, j);
+        else
+          WTERRAIN(W, i, j) = max;
+      }
     }
   }
+  else if (rank == size - 1)
+  {
+    // je lis  la derniére ligne  de la matrice  et les bords
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < nrows; i++)
+    {
+      for (int j = 0; j < ncols; j++)
+      {
+        if (i == nrows-1 || j == 0 || j == ncols - 1 || TERRAIN(m, i, j) == m->no_data)
+          WTERRAIN(W, i, j) = TERRAIN(m, i, j);
+        else
+          WTERRAIN(W, i, j) = max;
+      }
+    }
+  }
+  else{
+    // je lis  que  les bords
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < nrows; i++)
+    {
+      for (int j = 0; j < ncols; j++)
+      {
+        if ( j == 0 || j == ncols - 1 || TERRAIN(m, i, j) == m->no_data)
+          WTERRAIN(W, i, j) = TERRAIN(m, i, j);
+        else
+          WTERRAIN(W, i, j) = max;
+      }
+    }
+  }
+
+ 
+  // for(int i = 0 ; i < nrows ; i++)
+  // { 
+  //   for(int j = 0 ; j < ncols ; j++)
+  //   {
+  //     if(i==0 || i==nrows-1 || j==0 || j==ncols-1 || TERRAIN(m,i,j) == m->no_data)
+  //       WTERRAIN(W,i,j) = TERRAIN(m,i,j);
+  //     else
+  //       WTERRAIN(W,i,j) = max;
+  //   }
+  // }
 
   return(W);
 }
