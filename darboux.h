@@ -6,5 +6,6 @@
 #define EPSILON .01
 
 mnt *darboux(const mnt *restrict m);
+void send_lines(float* w, int ncols, int nrows);
 
 #endif

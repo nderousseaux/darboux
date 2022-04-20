@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   // COMPUTE
   d = darboux(m);
 
-  // WRITE OUTPUT
+  // // WRITE OUTPUT
   // FILE *out;
   // if(argc == 3)
   //   out = fopen(argv[2], "w");
@@ -49,8 +49,6 @@ int main(int argc, char **argv)
   free(m);
   free(d->terrain);
   free(d);
-
-
   MPI_Finalize();
   return(0);
 }
