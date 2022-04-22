@@ -12,7 +12,8 @@ typedef struct mnt_t
 }
 mnt;
 
-
+int rank;
+int size;
 
 // access to terrain in an mnt m as a 2D array:
 #define TERRAIN(m,i,j) (m->terrain[(i)*m->ncols+(j)])

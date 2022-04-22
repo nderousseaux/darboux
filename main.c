@@ -13,12 +13,11 @@ int main(int argc, char **argv)
   if (MPI_Init(&argc, &argv)){
 		fprintf(stderr, "Erreur MPI_Init\n");
   }
-  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  mnt *m;
-  mnt *d;  
+  mnt *m, *d;  
+  double time_start, time_end, duration;
 
   if(argc < 2)
   {
@@ -30,17 +29,18 @@ int main(int argc, char **argv)
   m = mnt_read(argv[1]);
 
   // COMPUTE
-  double start = MPI_Wtime();
+  time_start = MPI_Wtime();
   d = darboux(m);
-  double end = MPI_Wtime();
-  double duree_globale;
-  double duree = end-start;
-  MPI_Reduce(&duree, &duree_globale, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  time_end = MPI_Wtime();
+  duration = time_end-time_start;
+  MPI_Allreduce(&duration, &duration, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  duration /=size;
 
+  //Merge matrices
   d = merge_result(d);
 
   if(rank == 0){
-    printf("%f\n", duree_globale/size);
+    printf("%f\n", duration);
     // WRITE OUTPUT
     FILE *out;
     if(argc == 3)
