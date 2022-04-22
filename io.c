@@ -10,6 +10,9 @@
 int share_rows(int n_rows, int index){
   int size;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  if(index == size-1 && index == 0){
+    return n_rows;
+  }
 
   int result = n_rows/size;
   int reste=n_rows%size;
@@ -77,8 +80,8 @@ mnt *mnt_read(char *fname)
     // prenons l'exemple de min.mnt  qui est de taille de 10*10
     // le premier processus  qui va recupérer les premiéres lignes va prévoire tjr  de la place pour une derniére ligne
     // du coup le nombre de ligne totale =nrows+1
-    printf("%d\n", share_rows(m_principal->nrows, 0));
     m = create_m(m_principal, share_rows(m_principal->nrows, 0));
+
     // ncols-1 car la derniére ligne sera réservé
     for(int i=0; i<m->ncols*m->nrows; i++){
       m->terrain[i] = m_principal->terrain[i];
@@ -98,7 +101,6 @@ mnt *mnt_read(char *fname)
 
   }
   // display_information(m,rank);
-  // printf("%d : %d\n", rank, m->nrows);
   return(m);
 }
 

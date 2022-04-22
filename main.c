@@ -30,11 +30,17 @@ int main(int argc, char **argv)
   m = mnt_read(argv[1]);
 
   // COMPUTE
+  double start = MPI_Wtime();
   d = darboux(m);
+  double end = MPI_Wtime();
+  double duree_globale;
+  double duree = end-start;
+  MPI_Reduce(&duree, &duree_globale, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   d = merge_result(d);
 
   if(rank == 0){
+    printf("%f\n", duree_globale/size);
     // WRITE OUTPUT
     FILE *out;
     if(argc == 3)
