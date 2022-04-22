@@ -58,7 +58,6 @@ mnt *create_m(mnt *m_source, int nrows){
   return m;
 }
 
-//FIXME:Envoier avec des scatters ?
 mnt *mnt_read(char *fname){
   mnt *m;
   CHECK((m = malloc(sizeof(*m))) != NULL);
