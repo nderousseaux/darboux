@@ -47,7 +47,7 @@ mnt *create_m(mnt *m_source, int nrows){
   m->no_data  = m_source->no_data;
 
   CHECK((m->terrain = malloc(m->ncols * m->nrows * sizeof(float))) != NULL);
-  for(int i = 0; i<m->ncols*m->nrows; i++){
+  for(int i = 0; i<m->ncols*m->nrows; i++){ //TODO: SUpprimer si sert à rien
     m->terrain[i] = 0.;
   }
   return m;
@@ -159,6 +159,48 @@ mnt *read_file(char *fname){
   return m;
 }
 
-void merge_result(mnt *d){
-  
+mnt *merge_result(mnt *d){
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  //On calcule la taille de la matrice initiale
+  int nrows;
+  MPI_Allreduce(&d->nrows, &nrows, 1, MPI_INT, MPI_SUM,MPI_COMM_WORLD);
+  nrows -= (size-1)*2;
+  if(rank == 0){
+    //On crée la matrice
+    mnt * d_final = create_m(d, nrows);
+
+    //On rempli la matrice
+    for(int i=0; i<d->ncols*d->nrows; i++){
+      d_final->terrain[i] = d->terrain[i];
+    }
+    for(int i = 1; i<size; i++){
+      int ligne_depart = i*(nrows/size);
+      int nbLigne = 0;
+      if(i == size-1){
+        nbLigne = share_rows(nrows, i)-1;
+      }
+      else{
+        nbLigne = share_rows(nrows, i)-2;
+      }
+      MPI_Recv(&(d_final->terrain[ligne_depart*d_final->ncols]), d->ncols * nbLigne, MPI_FLOAT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+      
+    d = d_final;
+
+    // for(int i=0; i<d->ncols*d->nrows;i++){
+    //   printf("%d : %f\n",i, d->terrain[i]);
+    // }
+  }
+  else{
+    //On envoie sa matrice
+    int minus = 2;
+    if(rank == size-1){
+      minus = 1;
+    }
+    
+    MPI_Ssend(&(d->terrain[d->ncols]), d->ncols * (d->nrows-minus),MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+  }
+  return d;
 }

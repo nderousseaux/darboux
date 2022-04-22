@@ -32,7 +32,7 @@ int main(int argc, char **argv)
   // COMPUTE
   d = darboux(m);
 
-  merge_result(d);
+  d = merge_result(d);
 
   if(rank == 0){
     // WRITE OUTPUT
