@@ -21,7 +21,9 @@
 // calcule la valeur max de hauteur sur un terrain
 float max_terrain(const mnt *restrict m){
   float max = m->terrain[0];
-  for(int i = 0 ; i < m->ncols * m->nrows ; i++)
+  int i;
+  #pragma omp parallel for private(i) reduction(max:max)
+  for(i = 0 ; i < m->ncols * m->nrows ; i++)
     if(m->terrain[i] > max)
       max = m->terrain[i];
   return(max);
@@ -30,6 +32,7 @@ float max_terrain(const mnt *restrict m){
 float *init_W(const mnt *restrict m){
   const int ncols = m->ncols, nrows = m->nrows;
   float *restrict W;
+  int i, j;
   CHECK((W = malloc(ncols * nrows * sizeof(float))) != NULL);
 
   // initialisation W
@@ -37,9 +40,10 @@ float *init_W(const mnt *restrict m){
 
   MPI_Allreduce(&max, &max, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
   
-  for(int i = 0 ; i < nrows ; i++)
+  #pragma omp parallel for private(j) collapse(2)
+  for(i = 0 ; i < nrows ; i++)
   { 
-    for(int j = 0 ; j < ncols ; j++)
+    for(j = 0 ; j < ncols ; j++)
     {
       if(i==0 || i==nrows-1 || j==0 || j==ncols-1 || TERRAIN(m,i,j) == m->no_data)
         WTERRAIN(W,i,j) = TERRAIN(m,i,j);
@@ -53,8 +57,6 @@ float *init_W(const mnt *restrict m){
 
 void send_lines(float* w, int ncols, int nrows){
   MPI_Request request = MPI_REQUEST_NULL;
-
-  
 
   //Envoi
   if(rank != 0){
@@ -171,11 +173,12 @@ mnt *darboux(const mnt *restrict m){
 
   // calcul : boucle principale
   int modif;
-  int i, j;
+  int i,j;
   while(modif){
     send_lines(Wprec, ncols, nrows);
     modif = 0; // sera mis à 1 s'il y a une modification
 
+    #pragma omp parallel for private(j) collapse(2)
     for(i=first_line; i<last_line; i++){
       for(j=0; j<ncols; j++){
         // calcule la nouvelle valeur de W[i,j]

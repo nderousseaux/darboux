@@ -13,12 +13,21 @@ for f in $FILES
 do
     name=`basename $f`
 
-    for nbMachine in `seq 1 16`
+
+    export OMP_NUM_THREADS=1
+    echo "Processing $name file with 1 vm... (without openmp)"
+    mpirun -n 1 --hostfile $HOSTFILE --map-by node --bind-to none $MAIN $INPUT/$name out/$name
+    if [ `diff out/${name} samples/${name} | wc -l` -ne 0 ]; then
+        echo "ERRRRREUUUUUUUUR !! (le résultat est différent de l'exemple)"
+    fi
+
+    export OMP_NUM_THREADS=4
+    for nbMachine in 1 2 6
     do
-        echo "Processing $name file with $nbMachine vm..."
-        mpirun -n $nbMachine --hostfile $HOSTFILE $MAIN $INPUT/$name out/$name
+        echo "Processing $name file with $nbMachine vm...(with openmp)"
+        mpirun -n $nbMachine --hostfile $HOSTFILE --map-by node --bind-to none $MAIN $INPUT/$name out/$name
         if [ `diff out/${name} samples/${name} | wc -l` -ne 0 ]; then
-            echo "ERRRRREUUUUUUUUR !! (le résultat et différent de l'exemple)"
+            echo "ERRRRREUUUUUUUUR !! (le résultat est différent de l'exemple)"
         fi
     done
 done
