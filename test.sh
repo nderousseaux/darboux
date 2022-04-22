@@ -11,7 +11,7 @@ if [ "$#" -eq 1 ]; then
 fi
 echo "file;time;index;openmp;nbVms" > res.csv
 
-for i in `seq 0 5`
+for i in `seq 0 3`
 do
     for f in $FILES
     do
