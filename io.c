@@ -66,7 +66,7 @@ mnt *mnt_read(char *fname)
 
     //On envoie une partie de la matrice à chaque sous processus
     for(int i = 1; i<size; i++){
-      int size_m[2] = {m_principal->ncols, share_rows(m_principal->ncols, i)};
+      int size_m[2] = {m_principal->ncols, share_rows(m_principal->nrows, i)};
       int offset = (m_principal->ncols * (m_principal->nrows/size) * i)-m_principal->ncols;
       MPI_Ssend(&size_m, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
       MPI_Ssend(&m_principal->xllcorner, 4, MPI_FLOAT, i, 0, MPI_COMM_WORLD);
@@ -77,7 +77,8 @@ mnt *mnt_read(char *fname)
     // prenons l'exemple de min.mnt  qui est de taille de 10*10
     // le premier processus  qui va recupérer les premiéres lignes va prévoire tjr  de la place pour une derniére ligne
     // du coup le nombre de ligne totale =nrows+1
-    m = create_m(m_principal, share_rows(m_principal->ncols, 0));
+    printf("%d\n", share_rows(m_principal->nrows, 0));
+    m = create_m(m_principal, share_rows(m_principal->nrows, 0));
     // ncols-1 car la derniére ligne sera réservé
     for(int i=0; i<m->ncols*m->nrows; i++){
       m->terrain[i] = m_principal->terrain[i];
@@ -97,6 +98,7 @@ mnt *mnt_read(char *fname)
 
   }
   // display_information(m,rank);
+  // printf("%d : %d\n", rank, m->nrows);
   return(m);
 }
 

@@ -242,13 +242,15 @@ mnt *darboux(const mnt *restrict m)
 
   send_lines(Wprec, ncols, nrows);
 
+  
+
 
   // calcul : boucle principale
   int modif;
   int modifGlobal = 4;
   int i, j;
   int a =0;
-  while(modifGlobal >= size)
+  while(modifGlobal)
   {
     modif = 0; // sera mis à 1 s'il y a une modification
 
@@ -262,19 +264,16 @@ mnt *darboux(const mnt *restrict m)
     if(rank == size-1){
       fin = nrows;
     }
-
+    
     for(i=debut; i<fin; i++){
       for(j=0; j<ncols; j++){
         // calcule la nouvelle valeur de W[i,j]
         // en utilisant les 8 voisins de la position [i,j] du tableau Wprec
         modif |= calcul_Wij(W, Wprec, m, i, j);
       }
-
     }
     send_lines(W, ncols, nrows);
-
     MPI_Allreduce(&modif, &modifGlobal, 1, MPI_INT, MPI_SUM,MPI_COMM_WORLD);
-
     #ifdef DARBOUX_PPRINT
     dpprint();
     #endif
@@ -288,6 +287,7 @@ mnt *darboux(const mnt *restrict m)
   }
   // fin du while principal
   //Attendre que tout le monde ai fini
+  send_lines(W, ncols, nrows);
 
   // fin du calcul, le résultat se trouve dans W
   free(Wprec);
