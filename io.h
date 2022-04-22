@@ -11,5 +11,6 @@ void mnt_write_lakes(mnt *m, mnt *d, FILE *f);
 int share_rows(int n_rows, int index);
 mnt *read_file(char *fname);
 mnt *create_m(mnt *m, int index);
+void merge_result(mnt *d);
 
 #endif

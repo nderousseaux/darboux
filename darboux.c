@@ -124,11 +124,11 @@ void send_lines(float* w, int ncols, int nrows){
   //Envoi
   if(rank != 0){
     //Envoi première ligne au processus -rank
-    MPI_Issend(&(w[0]), ncols, MPI_FLOAT, rank-1, 0, MPI_COMM_WORLD, &request);
+    MPI_Issend(&(w[ncols]), ncols, MPI_FLOAT, rank-1, 0, MPI_COMM_WORLD, &request);
   }
   if(rank != size-1){
     //Envoi dernière ligne au processus +rank
-    MPI_Issend(&(w[ncols*(nrows-1)]), ncols, MPI_FLOAT, rank+1, 0, MPI_COMM_WORLD, &request);
+    MPI_Issend(&(w[ncols*(nrows-2)]), ncols, MPI_FLOAT, rank+1, 0, MPI_COMM_WORLD, &request);
   }
 
 
@@ -240,26 +240,40 @@ mnt *darboux(const mnt *restrict m)
   CHECK((W = malloc(ncols * nrows * sizeof(float))) != NULL);
   Wprec = init_W(m);
 
+  send_lines(Wprec, ncols, nrows);
+
+
   // calcul : boucle principale
   int modif;
-  int modifGlobal = 0;
-  int i;
-  while(modifGlobal < size)
+  int modifGlobal = 4;
+  int i, j;
+  int a =0;
+  while(modifGlobal >= size)
   {
     modif = 0; // sera mis à 1 s'il y a une modification
 
     // calcule le nouveau W fonction de l'ancien (Wprec) en chaque point [i,j]
     // #pragma omp parallel for
-    for(i=0; i<nrows*ncols; i++)
-    {
-
-      // calcule la nouvelle valeur de W[i,j]
-      // en utilisant les 8 voisins de la position [i,j] du tableau Wprec
-      modif |= calcul_Wij(W, Wprec, m, i/ncols, i%ncols);
+    int debut = 1;
+    int fin = nrows -1;
+    if(rank == 0){
+      debut = 0;
     }
+    if(rank == size-1){
+      fin = nrows;
+    }
+
+    for(i=debut; i<fin; i++){
+      for(j=0; j<ncols; j++){
+        // calcule la nouvelle valeur de W[i,j]
+        // en utilisant les 8 voisins de la position [i,j] du tableau Wprec
+        modif |= calcul_Wij(W, Wprec, m, i, j);
+      }
+
+    }
+    send_lines(W, ncols, nrows);
+
     MPI_Allreduce(&modif, &modifGlobal, 1, MPI_INT, MPI_SUM,MPI_COMM_WORLD);
-
-
 
     #ifdef DARBOUX_PPRINT
     dpprint();
@@ -270,7 +284,7 @@ mnt *darboux(const mnt *restrict m)
     float *tmp = W;
     W = Wprec;
     Wprec = tmp;
-    send_lines(W, ncols, nrows);
+    a++;
   }
   // fin du while principal
   //Attendre que tout le monde ai fini
@@ -282,8 +296,6 @@ mnt *darboux(const mnt *restrict m)
   CHECK((res=malloc(sizeof(*res))) != NULL);
   memcpy(res, m, sizeof(*res));
   res->terrain = W;
-
-  printf("%d :%f\n", rank, W[1]);
 
   return(res);
   // return(m);

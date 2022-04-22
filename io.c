@@ -158,3 +158,7 @@ mnt *read_file(char *fname){
   CHECK(fclose(f) == 0); 
   return m;
 }
+
+void merge_result(mnt *d){
+  
+}

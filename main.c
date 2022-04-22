@@ -32,17 +32,21 @@ int main(int argc, char **argv)
   // COMPUTE
   d = darboux(m);
 
-  // // WRITE OUTPUT
-  // FILE *out;
-  // if(argc == 3)
-  //   out = fopen(argv[2], "w");
-  // else
-  //   out = stdout;
-  // mnt_write(d, out);
-  // if(argc == 3)
-  //   fclose(out);
-  // else
-  //   mnt_write_lakes(m, d, stdout);
+  merge_result(d);
+
+  if(rank == 0){
+    // WRITE OUTPUT
+    FILE *out;
+    if(argc == 3)
+      out = fopen(argv[2], "w");
+    else
+      out = stdout;
+    mnt_write(d, out);
+    if(argc == 3)
+      fclose(out);
+    else
+      mnt_write_lakes(m, d, stdout);
+  }
 
   
   free(m->terrain);
